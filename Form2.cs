@@ -13,15 +13,12 @@ namespace LAB3
 {
     public partial class Form2 : Form
     {
-        Random blessrng;
         LSB megamachine1;
         Image toSave;
 
         public Form2()
         {
             InitializeComponent();
-            blessrng = new Random();
-            blessrng.Next();
             megamachine1 = new LSB();
             DownloadImg.Visible = false;
             toSave = null;
@@ -43,7 +40,6 @@ namespace LAB3
                     return;
                 }
 
-
                 if (Insert.Checked)
                 {
                     Bitmap result = null;
@@ -54,6 +50,7 @@ namespace LAB3
 
                         pictureBox1.Image = result;
                         toSave = result;
+                        DownloadImg.Visible = true;
                     }
                     catch (Exception ex)
                     {
@@ -68,10 +65,8 @@ namespace LAB3
                     if (Extract.Checked && LSB.Checked)
                         resmsg = megamachine1.LsbDecodeImage(pictureBox1.Image);
                     textBox1.Clear();
-                    textBox1.Text = resmsg;
+                    textBox1.Text = "Сообщение в изображении: " + resmsg;
                 }
-
-                DownloadImg.Visible = true;
             }
         }
 
@@ -117,15 +112,28 @@ namespace LAB3
             Array.Reverse(charArray);
             return new string(charArray);
         }
+        private String IntToBit(int val, int bits)
+        {
+            String ans = null;
+            for (int i = 0; i < bits; i++)
+            {
+                ans += (val % 2 == 0 ? "0" : "1");
+                val >>= 1;
+            }
+            ans = Reverse(ans);
+            return ans;
+        }
+        private int BitToInt(String bit)
+        {
+            int t = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                t += (bit[i] == '0' ? 0 : 1) * (int)Math.Pow(2, 8 - i - 1);
+            }
+            return t;
+        }
         private Color EncodePixel(String msg, Color col)
         {
-            //msg = {0,1,2,3}
-
-            //int t = col.ToArgb();
-            //t = t / 4;
-            //t += msg;
-            //return Color.FromArgb(t);
-
             Color a = Color.FromArgb( (col.A >> 1 << 1) + (msg[0] == '0' ? 0 : 1),
                                       (col.R >> 1 << 1) + (msg[1] == '0' ? 0 : 1),
                                       (col.G >> 1 << 1) + (msg[2] == '0' ? 0 : 1),
@@ -134,13 +142,14 @@ namespace LAB3
         }
         private int DecodePixel(Color col)
         {
-            //retval = {0,1,2,3}
             int ans = 0;
             ans += ((col.A) % 2);
+            ans <<= 1;
             ans += ((col.R) % 2);
+            ans <<= 1;
             ans += ((col.G) % 2);
+            ans <<= 1;
             ans += ((col.B) % 2);
-
             return ans;
         }
         private String MsgToBit(String msg)
@@ -171,11 +180,11 @@ namespace LAB3
 
             for (int i = 0; i*8 < bit.Length; i++)
             {
-                String s = bit.Substring(i, 8);
+                String s = bit.Substring(i*8, 8);
                 int t = 0;
                 for (int j = 0; j < 8; j++)
                 {
-                    t += (s[i] == '0' ? 0 : 1) * (int)Math.Pow(2, 8 - i - 1);
+                    t += (s[j] == '0' ? 0 : 1) * (int)Math.Pow(2, 7 - j);
                 }
                 ans += (char)t;
             }
@@ -186,19 +195,20 @@ namespace LAB3
         {
             Bitmap boat = new Bitmap(img);
 
-            if (boat.Width * boat.Height < (msg.Length * 2))
+            if (boat.Width * boat.Height < (32 + msg.Length * 2))
                 throw new Exception("Overflow");
 
-            String bitmsg = MsgToBit(msg); //исходное сообщение переделываем в последовательность бит
-
+            //исходное сообщение переделываем в последовательность бит
+            String bitmsg = IntToBit(msg.Length * 2, 32);
+            bitmsg += MsgToBit(msg); 
 
             int i = 0;
-            while (i + 2 < bitmsg.Length)
+            while (i * BITS_BY_PIXEL < bitmsg.Length)
             {
                 Color t = boat.GetPixel(i / boat.Width, i % boat.Height);
-                Color ins = EncodePixel(bitmsg.Substring(i, BITS_BY_PIXEL), t);
+                Color ins = EncodePixel(bitmsg.Substring(i * BITS_BY_PIXEL, BITS_BY_PIXEL), t);
                 boat.SetPixel(i / boat.Width, i % boat.Height, ins);
-                i += BITS_BY_PIXEL;
+                i++;
             }
             
             return boat;
@@ -206,7 +216,23 @@ namespace LAB3
         public String LsbDecodeImage(Image img)
         {
             String ans = null;
+            Bitmap boat = new Bitmap(img);
 
+            int num = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                Color t = boat.GetPixel(i / boat.Width, i % boat.Height);
+                num = (num << BITS_BY_PIXEL) + DecodePixel(t);
+            }
+
+            //num пикселей обрабатываем
+            for (int i = 8; i - 8 < num; i++)
+            {
+                Color t = boat.GetPixel(i / boat.Width, i % boat.Height);
+                ans += (IntToBit(DecodePixel(t), BITS_BY_PIXEL));
+            }
+
+            ans = BitToMsg(ans);
 
             return ans;
         }

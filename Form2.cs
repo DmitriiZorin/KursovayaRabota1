@@ -134,7 +134,7 @@ namespace LAB3
         }
         private Color EncodePixel(String msg, Color col)
         {
-            Color a = Color.FromArgb( (col.A >> 1 << 1) + (msg[0] == '0' ? 0 : 1),
+            Color a = Color.FromArgb((col.A >> 1 << 1) + (msg[0] == '0' ? 0 : 1),
                                       (col.R >> 1 << 1) + (msg[1] == '0' ? 0 : 1),
                                       (col.G >> 1 << 1) + (msg[2] == '0' ? 0 : 1),
                                       (col.B >> 1 << 1) + (msg[3] == '0' ? 0 : 1));
@@ -156,7 +156,7 @@ namespace LAB3
         {
             String ans = null;
 
-            for (int i = 0; i < msg.Length; i++) 
+            for (int i = 0; i < msg.Length; i++)
             {
                 byte a = ((byte)msg[i]);
                 string asd = null;
@@ -178,9 +178,9 @@ namespace LAB3
         {
             String ans = null;
 
-            for (int i = 0; i*8 < bit.Length; i++)
+            for (int i = 0; i * 8 < bit.Length; i++)
             {
-                String s = bit.Substring(i*8, 8);
+                String s = bit.Substring(i * 8, 8);
                 int t = 0;
                 for (int j = 0; j < 8; j++)
                 {
@@ -200,7 +200,7 @@ namespace LAB3
 
             //исходное сообщение переделываем в последовательность бит
             String bitmsg = IntToBit(msg.Length * 2, 32);
-            bitmsg += MsgToBit(msg); 
+            bitmsg += MsgToBit(msg);
 
             int i = 0;
             while (i * BITS_BY_PIXEL < bitmsg.Length)
@@ -210,7 +210,7 @@ namespace LAB3
                 boat.SetPixel(i / boat.Width, i % boat.Height, ins);
                 i++;
             }
-            
+
             return boat;
         }
         public String LsbDecodeImage(Image img)

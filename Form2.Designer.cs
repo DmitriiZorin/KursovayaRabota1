@@ -59,6 +59,7 @@ namespace LAB3
             this.Insert.TabStop = true;
             this.Insert.Text = "Встроить текст";
             this.Insert.UseVisualStyleBackColor = true;
+            this.Insert.MouseClick += new System.Windows.Forms.MouseEventHandler(this.Insert_MouseClick);
             // 
             // groupBox1
             // 
@@ -82,6 +83,7 @@ namespace LAB3
             this.Extract.TabStop = true;
             this.Extract.Text = "Извлечь текст";
             this.Extract.UseVisualStyleBackColor = true;
+            this.Extract.MouseClick += new System.Windows.Forms.MouseEventHandler(this.Extract_MouseClick);
             // 
             // executeStego
             // 
@@ -177,6 +179,7 @@ namespace LAB3
             // 
             // saveFileDialog1
             // 
+            this.saveFileDialog1.Filter = "*.bmp|*.bmp";
             this.saveFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.saveFileDialog1_FileOk);
             // 
             // DownloadImg

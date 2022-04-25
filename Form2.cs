@@ -14,7 +14,9 @@ namespace LAB3
     public partial class Form2 : Form
     {
         LSB megamachine1;
-        Image toSave;
+        Bitmap toExecute;
+        Bitmap toSave;
+
 
         public Form2()
         {
@@ -22,6 +24,7 @@ namespace LAB3
             megamachine1 = new LSB();
             DownloadImg.Visible = false;
             toSave = null;
+            toExecute = null;
         }
 
         private void button1_MouseClick(object sender, MouseEventArgs e)
@@ -34,7 +37,7 @@ namespace LAB3
             }
             else
             {
-                if (pictureBox1.Image == null)
+                if (toExecute == null)
                 {
                     MessageBox.Show("Загрузите картинку.");
                     return;
@@ -46,7 +49,7 @@ namespace LAB3
                     try
                     {
                         if (LSB.Checked)
-                            result = megamachine1.LsbEncodeImage(pictureBox1.Image, textBox1.Text);
+                            result = megamachine1.LsbEncodeImage(toExecute, textBox1.Text);
 
                         pictureBox1.Image = result;
                         toSave = result;
@@ -63,7 +66,7 @@ namespace LAB3
                     String resmsg = null;
 
                     if (Extract.Checked && LSB.Checked)
-                        resmsg = megamachine1.LsbDecodeImage(pictureBox1.Image);
+                        resmsg = megamachine1.LsbDecodeImage(toExecute);
                     textBox1.Clear();
                     textBox1.Text = "Сообщение в изображении: " + resmsg;
                 }
@@ -81,14 +84,15 @@ namespace LAB3
         {
             string[] path = openFileDialog1.FileNames;
 
-            foreach(string i in path)
-            {
-                System.IO.FileInfo fileInfo = new System.IO.FileInfo(i);
-                System.IO.FileStream fileStream = fileInfo.OpenRead();
-                pictureBox1.Image = System.Drawing.Image.FromStream(fileStream);
-                Application.DoEvents();
-                fileStream.Close();
-            }
+            System.IO.FileInfo fileInfo = new System.IO.FileInfo(path[0]);
+            System.IO.FileStream fileStream = fileInfo.OpenRead();
+            Image rawImage = System.Drawing.Image.FromStream(fileStream);
+            Application.DoEvents();
+            fileStream.Close();
+
+
+            toExecute = new Bitmap(rawImage);
+            pictureBox1.Image = toExecute;
         }
 
         private void DownloadImg_MouseClick(object sender, MouseEventArgs e)
@@ -98,14 +102,30 @@ namespace LAB3
 
         private void saveFileDialog1_FileOk(object sender, CancelEventArgs e)
         {
-            toSave.Save(saveFileDialog1.FileName);
+            toSave.Save(saveFileDialog1.FileName + ".bmp");
             DownloadImg.Visible = false;
             toSave = null;
+        }
+
+        private void Extract_MouseClick(object sender, MouseEventArgs e)
+        {
+            pictureBox1.Image = null;
+            textBox1.Text = "";
+        }
+
+        private void Insert_MouseClick(object sender, MouseEventArgs e)
+        {
+            pictureBox1.Image = null;
+            textBox1.Text = "";
         }
     }
     public class LSB
     {
+        //АЛЬФА КАНАЛ НЕ КОДИРУЕМ
         const int BITS_BY_PIXEL = 4;
+        const int BITS_TO_SIZE = 32;
+        const int BITS_TO_SYMBOL = 16;
+        
         public static string Reverse(string s)
         {
             char[] charArray = s.ToCharArray();
@@ -126,30 +146,31 @@ namespace LAB3
         private int BitToInt(String bit)
         {
             int t = 0;
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < bit.Length; i++)
             {
-                t += (bit[i] == '0' ? 0 : 1) * (int)Math.Pow(2, 8 - i - 1);
+                t += (bit[i] == '0' ? 0 : 1) * (int)Math.Pow(2, bit.Length - i - 1);
             }
             return t;
         }
         private Color EncodePixel(String msg, Color col)
         {
-            Color a = Color.FromArgb((col.A >> 1 << 1) + (msg[0] == '0' ? 0 : 1),
-                                      (col.R >> 1 << 1) + (msg[1] == '0' ? 0 : 1),
-                                      (col.G >> 1 << 1) + (msg[2] == '0' ? 0 : 1),
-                                      (col.B >> 1 << 1) + (msg[3] == '0' ? 0 : 1));
+            //Color a = Color.FromArgb((col.A >> 1 << 1) + (msg[0] == '0' ? 0 : 1),
+            //                          (col.R >> 1 << 1) + (msg[1] == '0' ? 0 : 1),
+            //                          (col.G >> 1 << 1) + (msg[2] == '0' ? 0 : 1),
+            //                          (col.B >> 1 << 1) + (msg[3] == '0' ? 0 : 1));
+
+            int g = (col.G >> 2 << 2) + (msg[0] == '0' ? 0 : 2) + (msg[1] == '0' ? 0 : 1);
+            int b = (col.B >> 2 << 2) + (msg[2] == '0' ? 0 : 2) + (msg[3] == '0' ? 0 : 1);
+
+            Color a = Color.FromArgb(col.A, col.R, g, b);
             return a;
         }
         private int DecodePixel(Color col)
         {
             int ans = 0;
-            ans += ((col.A) % 2);
-            ans <<= 1;
-            ans += ((col.R) % 2);
-            ans <<= 1;
-            ans += ((col.G) % 2);
-            ans <<= 1;
-            ans += ((col.B) % 2);
+            ans += ((col.G) % 4);
+            ans <<= 2;
+            ans += ((col.B) % 4);
             return ans;
         }
         private String MsgToBit(String msg)
@@ -158,14 +179,14 @@ namespace LAB3
 
             for (int i = 0; i < msg.Length; i++)
             {
-                byte a = ((byte)msg[i]);
+                int a = ((int)msg[i]);
                 string asd = null;
                 while (a != 0)
                 {
                     asd += (a % 2 == 0 ? "0" : "1");
                     a /= 2;
                 }
-                while (asd.Length != 8)
+                while (asd.Length != BITS_TO_SYMBOL)
                 {
                     asd += "0";
                 }
@@ -178,61 +199,71 @@ namespace LAB3
         {
             String ans = null;
 
-            for (int i = 0; i * 8 < bit.Length; i++)
+            for (int i = 0; i * BITS_TO_SYMBOL < bit.Length; i++)
             {
-                String s = bit.Substring(i * 8, 8);
+                String s = bit.Substring(i * BITS_TO_SYMBOL, BITS_TO_SYMBOL);
                 int t = 0;
-                for (int j = 0; j < 8; j++)
+                for (int j = 0; j < BITS_TO_SYMBOL; j++)
                 {
-                    t += (s[j] == '0' ? 0 : 1) * (int)Math.Pow(2, 7 - j);
+                    t += (s[j] == '0' ? 0 : 1) * (int)Math.Pow(2, BITS_TO_SYMBOL - 1 - j);
                 }
                 ans += (char)t;
             }
 
             return ans;
         }
-        public Bitmap LsbEncodeImage(Image img, String msg)
+        public Bitmap LsbEncodeImage(Bitmap img, String msg)
         {
             Bitmap boat = new Bitmap(img);
 
-            if (boat.Width * boat.Height < (32 + msg.Length * 2))
+            if (boat.Width * boat.Height < (BITS_TO_SIZE + msg.Length * BITS_TO_SYMBOL / BITS_BY_PIXEL))
                 throw new Exception("Overflow");
 
             //исходное сообщение переделываем в последовательность бит
-            String bitmsg = IntToBit(msg.Length * 2, 32);
+            int t = (msg.Length * BITS_TO_SYMBOL / BITS_BY_PIXEL);
+            String bitmsg = IntToBit(t, BITS_TO_SIZE);
             bitmsg += MsgToBit(msg);
 
             int i = 0;
             while (i * BITS_BY_PIXEL < bitmsg.Length)
             {
-                Color t = boat.GetPixel(i / boat.Width, i % boat.Height);
-                Color ins = EncodePixel(bitmsg.Substring(i * BITS_BY_PIXEL, BITS_BY_PIXEL), t);
-                boat.SetPixel(i / boat.Width, i % boat.Height, ins);
+                Color ext = boat.GetPixel(i % boat.Width, i / boat.Height);
+                Color ins = EncodePixel(bitmsg.Substring(i * BITS_BY_PIXEL, BITS_BY_PIXEL), ext);
+                boat.SetPixel(i % boat.Width, i / boat.Height, ins);
                 i++;
             }
 
             return boat;
         }
-        public String LsbDecodeImage(Image img)
+        public String LsbDecodeImage(Bitmap img)
         {
             String ans = null;
             Bitmap boat = new Bitmap(img);
 
             int num = 0;
-            for (int i = 0; i < 8; i++)
+            int i = 1;
+            String bitnum = null;
+
+            while (i * BITS_BY_PIXEL < BITS_TO_SIZE)
             {
-                Color t = boat.GetPixel(i / boat.Width, i % boat.Height);
-                num = (num << BITS_BY_PIXEL) + DecodePixel(t);
+                Color t = boat.GetPixel(i % boat.Width, i / boat.Height);
+                bitnum += (IntToBit(DecodePixel(t), BITS_BY_PIXEL));
+                i++;
             }
+            num = BitToInt(bitnum);
 
             //num пикселей обрабатываем
-            for (int i = 8; i - 8 < num; i++)
+            int off = (BITS_TO_SIZE / BITS_BY_PIXEL);
+            i = 0;
+            while (i  < num)
             {
-                Color t = boat.GetPixel(i / boat.Width, i % boat.Height);
+                Color t = boat.GetPixel((i+off) % boat.Width, (i + off) / boat.Height);
                 ans += (IntToBit(DecodePixel(t), BITS_BY_PIXEL));
+                i++;
             }
 
-            ans = BitToMsg(ans);
+            if (ans != null) ans = BitToMsg(ans);
+            else ans = "Сообщения нет.";
 
             return ans;
         }

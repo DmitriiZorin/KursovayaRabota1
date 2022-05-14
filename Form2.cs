@@ -1,27 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Windows;
 
 namespace LAB3
 {
     public partial class Form2 : Form
     {
-        LSB megamachine1;
         Bitmap toExecute;
         Bitmap toSave;
-
+        LSB LsbMachine;
+        PVD mach;
 
         public Form2()
         {
             InitializeComponent();
-            megamachine1 = new LSB();
+            LsbMachine = new LSB();
+            mach = new PVD();
             DownloadImg.Visible = false;
             toSave = null;
             toExecute = null;
@@ -37,7 +32,7 @@ namespace LAB3
             }
             else
             {
-                if (toExecute == null)
+                if (pictureBox1.Image == null)
                 {
                     MessageBox.Show("Загрузите картинку.");
                     return;
@@ -49,15 +44,18 @@ namespace LAB3
                     try
                     {
                         if (LSB.Checked)
-                            result = megamachine1.LsbEncodeImage(toExecute, textBox1.Text);
+                            result = LsbMachine.LsbEncodeImage(toExecute, textBox1.Text);
 
-                        pictureBox1.Image = result;
-                        toSave = result;
+                        if (radioButton3.Checked)
+                            result = mach.PvdEncodeImage(toExecute, textBox1.Text);
+
+                        pictureBox1.Image = new Bitmap(result);
+                        toSave = new Bitmap(result);
                         DownloadImg.Visible = true;
                     }
                     catch (Exception ex)
                     {
-                        if (ex.Message == "Overflow")
+                        if (ex.Message == "Bits Overflow")
                             MessageBox.Show("Сообщение слишком большое. Сократите его либо\nвозьмите картинку более высокого разрешения.");
                     }
                 }
@@ -65,8 +63,12 @@ namespace LAB3
                 {
                     String resmsg = null;
 
-                    if (Extract.Checked && LSB.Checked)
-                        resmsg = megamachine1.LsbDecodeImage(toExecute);
+                    if (LSB.Checked)
+                        resmsg = LsbMachine.LsbDecodeImage(toExecute);
+
+                    if (radioButton3.Checked)
+                        resmsg = mach.PvdDecodeImage(toExecute);
+
                     textBox1.Clear();
                     textBox1.Text = "Сообщение в изображении: " + resmsg;
                 }
@@ -86,13 +88,11 @@ namespace LAB3
 
             System.IO.FileInfo fileInfo = new System.IO.FileInfo(path[0]);
             System.IO.FileStream fileStream = fileInfo.OpenRead();
-            Image rawImage = System.Drawing.Image.FromStream(fileStream);
-            Application.DoEvents();
+            Bitmap rawImage = (Bitmap)Bitmap.FromStream(fileStream);
             fileStream.Close();
 
-
-            toExecute = new Bitmap(rawImage);
-            pictureBox1.Image = toExecute;
+            toExecute = rawImage;
+            pictureBox1.Image = rawImage;
         }
 
         private void DownloadImg_MouseClick(object sender, MouseEventArgs e)
@@ -102,174 +102,57 @@ namespace LAB3
 
         private void saveFileDialog1_FileOk(object sender, CancelEventArgs e)
         {
-            toSave.Save(saveFileDialog1.FileName + ".bmp");
+            toSave.Save(saveFileDialog1.FileName, System.Drawing.Imaging.ImageFormat.Bmp);
             DownloadImg.Visible = false;
             toSave = null;
+            pictureBox1.Image = null;
         }
 
         private void Extract_MouseClick(object sender, MouseEventArgs e)
         {
             pictureBox1.Image = null;
             textBox1.Text = "";
+            DownloadImg.Visible = false;
         }
 
         private void Insert_MouseClick(object sender, MouseEventArgs e)
         {
             pictureBox1.Image = null;
-            textBox1.Text = "";
+            textBox1.Text = ""; 
+            DownloadImg.Visible = false;
         }
+
     }
-    public class LSB
+    public class PVD
     {
-        //АЛЬФА КАНАЛ НЕ КОДИРУЕМ
-        const int BITS_BY_PIXEL = 4;
-        const int BITS_TO_SIZE = 32;
-        const int BITS_TO_SYMBOL = 16;
-        
-        public static string Reverse(string s)
+        public Bitmap PvdEncodeImage(Bitmap img, String msg)
         {
-            char[] charArray = s.ToCharArray();
-            Array.Reverse(charArray);
-            return new string(charArray);
-        }
-        private String IntToBit(int val, int bits)
-        {
-            String ans = null;
-            for (int i = 0; i < bits; i++)
+            Bitmap ans = new Bitmap(img);
+            Random rng = new Random();
+
+            for (int i = 0; i < img.Width * img.Height - 100; i++)
+            //for (int i = 0; i < 1; i++)
             {
-                ans += (val % 2 == 0 ? "0" : "1");
-                val >>= 1;
+                int x0 = (3 * i) % (img.Width - 1);
+                int y0 = (2 * i) / (img.Height - 2);
+                Color toEmbed = Color.FromArgb(rng.Next(0, 256), rng.Next(0, 256), rng.Next(0, 256));
+                ans.SetPixel(x0, y0, toEmbed);
+                ans.SetPixel(x0 + 1, y0, toEmbed);
+                ans.SetPixel(x0 + 2, y0, toEmbed);
+
+                ans.SetPixel(x0, y0 + 1, toEmbed);
+                ans.SetPixel(x0 + 1, y0 + 1, toEmbed);
+                ans.SetPixel(x0 + 2, y0 + 1, toEmbed);
+
             }
-            ans = Reverse(ans);
+
             return ans;
         }
-        private int BitToInt(String bit)
-        {
-            int t = 0;
-            for (int i = 0; i < bit.Length; i++)
-            {
-                t += (bit[i] == '0' ? 0 : 1) * (int)Math.Pow(2, bit.Length - i - 1);
-            }
-            return t;
-        }
-        private Color EncodePixel(String msg, Color col)
-        {
-            //Color a = Color.FromArgb((col.A >> 1 << 1) + (msg[0] == '0' ? 0 : 1),
-            //                          (col.R >> 1 << 1) + (msg[1] == '0' ? 0 : 1),
-            //                          (col.G >> 1 << 1) + (msg[2] == '0' ? 0 : 1),
-            //                          (col.B >> 1 << 1) + (msg[3] == '0' ? 0 : 1));
-
-            int g = (col.G >> 2 << 2) + (msg[0] == '0' ? 0 : 2) + (msg[1] == '0' ? 0 : 1);
-            int b = (col.B >> 2 << 2) + (msg[2] == '0' ? 0 : 2) + (msg[3] == '0' ? 0 : 1);
-
-            Color a = Color.FromArgb(col.A, col.R, g, b);
-            return a;
-        }
-        private int DecodePixel(Color col)
-        {
-            int ans = 0;
-            ans += ((col.G) % 4);
-            ans <<= 2;
-            ans += ((col.B) % 4);
-            return ans;
-        }
-        private String MsgToBit(String msg)
+        public String PvdDecodeImage(Bitmap img)
         {
             String ans = null;
 
-            for (int i = 0; i < msg.Length; i++)
-            {
-                int a = ((int)msg[i]);
-                string asd = null;
-                while (a != 0)
-                {
-                    asd += (a % 2 == 0 ? "0" : "1");
-                    a /= 2;
-                }
-                while (asd.Length != BITS_TO_SYMBOL)
-                {
-                    asd += "0";
-                }
-                ans += Reverse(asd);
-            }
-
             return ans;
         }
-        private String BitToMsg(String bit)
-        {
-            String ans = null;
-
-            for (int i = 0; i * BITS_TO_SYMBOL < bit.Length; i++)
-            {
-                String s = bit.Substring(i * BITS_TO_SYMBOL, BITS_TO_SYMBOL);
-                int t = 0;
-                for (int j = 0; j < BITS_TO_SYMBOL; j++)
-                {
-                    t += (s[j] == '0' ? 0 : 1) * (int)Math.Pow(2, BITS_TO_SYMBOL - 1 - j);
-                }
-                ans += (char)t;
-            }
-
-            return ans;
-        }
-        public Bitmap LsbEncodeImage(Bitmap img, String msg)
-        {
-            Bitmap boat = new Bitmap(img);
-
-            if (boat.Width * boat.Height < (BITS_TO_SIZE + msg.Length * BITS_TO_SYMBOL / BITS_BY_PIXEL))
-                throw new Exception("Overflow");
-
-            //исходное сообщение переделываем в последовательность бит
-            int t = (msg.Length * BITS_TO_SYMBOL / BITS_BY_PIXEL);
-            String bitmsg = IntToBit(t, BITS_TO_SIZE);
-            bitmsg += MsgToBit(msg);
-
-            int i = 0;
-            while (i * BITS_BY_PIXEL < bitmsg.Length)
-            {
-                Color ext = boat.GetPixel(i % boat.Width, i / boat.Height);
-                Color ins = EncodePixel(bitmsg.Substring(i * BITS_BY_PIXEL, BITS_BY_PIXEL), ext);
-                boat.SetPixel(i % boat.Width, i / boat.Height, ins);
-                i++;
-            }
-
-            return boat;
-        }
-        public String LsbDecodeImage(Bitmap img)
-        {
-            String ans = null;
-            Bitmap boat = new Bitmap(img);
-
-            int num = 0;
-            int i = 1;
-            String bitnum = null;
-
-            while (i * BITS_BY_PIXEL < BITS_TO_SIZE)
-            {
-                Color t = boat.GetPixel(i % boat.Width, i / boat.Height);
-                bitnum += (IntToBit(DecodePixel(t), BITS_BY_PIXEL));
-                i++;
-            }
-            num = BitToInt(bitnum);
-
-            //num пикселей обрабатываем
-            int off = (BITS_TO_SIZE / BITS_BY_PIXEL);
-            i = 0;
-            while (i  < num)
-            {
-                Color t = boat.GetPixel((i+off) % boat.Width, (i + off) / boat.Height);
-                ans += (IntToBit(DecodePixel(t), BITS_BY_PIXEL));
-                i++;
-            }
-
-            if (ans != null) ans = BitToMsg(ans);
-            else ans = "Сообщения нет.";
-
-            return ans;
-        }
-    }
-    class PVD
-    {
-
     }
 }

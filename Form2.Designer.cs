@@ -173,13 +173,12 @@ namespace LAB3
             // 
             // openFileDialog1
             // 
-            this.openFileDialog1.FileName = "openFileDialog1";
             this.openFileDialog1.RestoreDirectory = true;
             this.openFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.openFileDialog1_FileOk);
             // 
             // saveFileDialog1
             // 
-            this.saveFileDialog1.Filter = "*.bmp|*.bmp";
+            this.saveFileDialog1.Filter = ".BMP|*.bmp";
             this.saveFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.saveFileDialog1_FileOk);
             // 
             // DownloadImg

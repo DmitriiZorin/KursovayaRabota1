@@ -7,20 +7,10 @@ namespace steganography
 {
     public class PVD
     {
-        //кодируем блоками по 2 пикселя
-        //АЛЬФА КАНАЛ НЕ КОДИРУЕМ
-        const int BITS_BY_PIXEL = 3;
         const int BITS_TO_SIZE = 32;
         const int BITS_TO_FLAG = 16;
         const int BITS_TO_SYMBOL = 16;
         const String FLAG = "1111111111111111";
-        private void LogOn(String path, String data, bool append)
-        {
-            using (StreamWriter writer = new StreamWriter(path, append))
-            {
-                writer.WriteLine(data);
-            }
-        }
         private int GetGreyLevel(Color col)
         {
             return (col.R + col.G + col.B) / 3;
@@ -77,21 +67,12 @@ namespace steganography
             double n = Math.Truncate(Math.Log(upper - lower + 1) / Math.Log(2));
             if (Math.Abs(delta)<=1)
             {
-                //if (msg[0] == '0')
-                //{
-                //    n = 1;
-                //    upper = 1;
-                //    lower = 0;
-                //}
-                //else
-                {
-                    qwe = 0;
-                    o1 = new Color();
-                    o2 = new Color();
-                    return false;
-                }
+                qwe = 0;
+                o1 = new Color();
+                o2 = new Color();
+                return false;
             }
-            
+
             String submsg = msg.Substring(0, Math.Min(msg.Length, (int)n));
             while (submsg.Length != n)
             {   //для последней вставки в случае необхродимости удлинняем строку
@@ -102,43 +83,23 @@ namespace steganography
             newdelta = Math.Sign(delta) * (lower + toembed);
 
             int mid = (newdelta - delta);
-            //if ((g1 - mid / 2) < 256 &&
-            //    (g1 - mid / 2) > 0 &&
-            //    (g2 + mid / 2) + (g2 - mid % 2) < 256 &&
-            //    (g2 + mid / 2) + (g2 - mid % 2) > 0)
+            int a1, a2;
+            int low = (mid) / 2;
+            int up = mid - low;
+
+            a1 = g1 - low;
+            a2 = g2 + up;
+
+            SetGreyLevel(col1, a1, out o1);
+            SetGreyLevel(col2, a2, out o2);
+            qwe = (int)n;
+            int asd = Math.Abs(GetGreyLevel(o1) - GetGreyLevel(o2));
+
+            if (asd != Math.Abs(newdelta))
             {
-                int a1, a2;
-                int low = (mid) / 2;
-                int up = mid - low;
-
-                a1 = g1 - low;
-                a2 = g2 + up;
-
-                SetGreyLevel(col1, a1, out o1);
-                SetGreyLevel(col2, a2, out o2);
-                qwe = (int)n;
-                int asd = Math.Abs(GetGreyLevel(o1) - GetGreyLevel(o2));
-
-                if (asd != Math.Abs(newdelta)) 
-                {
-                    int a = 1 / 1;
-                }
-#if DEBUG
-                LogOn("logEncode.txt", $"True: ({GetGreyLevel(col1)})({GetGreyLevel(col2)})" +
-                                    $"({GetGreyLevel(o1)})({GetGreyLevel(o2)})" +
-                                    $"({upper})({lower})" +
-                                    $"({toembed})" + o1.ToString()
-                                    + " --- " + o2.ToString(), true);
-#endif 
-                return true;
+                int a = 1 / 1;
             }
-            o1 = new Color();
-            o2 = new Color();
-            qwe = 0;
-#if DEBUG
-            LogOn("logEncode.txt", "False", true);
-#endif
-            return false;
+            return true;
         }
         private int Decode2Pixels(Color col1, Color col2, out int bits, int onsize)
         {
@@ -170,13 +131,9 @@ namespace steganography
         {
             //Bitmap resultImage = new Bitmap(sourceImage.Width, sourceImage.Height, sourceImage.PixelFormat);
             Bitmap resultImage = new Bitmap(sourceImage);
-            String log = "logEncode.txt";
             String bitmsg = FLAG + 
                 BitMachine.IntToBit(msg.Length, BITS_TO_SIZE) + 
                 BitMachine.MsgToBit(msg);
-#if DEBUG
-            LogOn(log, " ", false);
-#endif
             int i = 0, p = 0;
             int width = sourceImage.Width - (sourceImage.Width % 2);
             int height = sourceImage.Height - (sourceImage.Height % 2);
@@ -202,7 +159,8 @@ namespace steganography
                 }
                 catch (Exception ex)
                 {
-                    throw ex;
+                    if (ex.Message.Contains("Параметр должен быть"))
+                        throw new Exception("Bits Overflow");
                 }
             }
 
@@ -211,24 +169,13 @@ namespace steganography
         public String PvdDecodeImage(Bitmap sourceImage)
         {
             String ans = "";
-            String log = "logDecode.txt";
             int i = 0, p = 0;
             int width = sourceImage.Width - (sourceImage.Width % 2);
             int height = sourceImage.Height - (sourceImage.Height % 2);
-#if DEBUG
-            LogOn(log, " ", false);
-#endif
-
             while (ans.Length < BITS_TO_FLAG)
             {
                 Color c1 = sourceImage.GetPixel((2 * i) % width, (2 * i) / height);
                 Color c2 = sourceImage.GetPixel((2 * i + 1) % width, (2 * i + 1) / height);
-#if DEBUG
-                LogOn(log, "True: "+
-                        $"({GetGreyLevel(c1)})({GetGreyLevel(c2)})"   
-                        + c1.ToString()
-                        + " --- " + c2.ToString(), true);
-#endif
                 int n = 0;
                 int a = Decode2Pixels(c1, c2, out n, 1);
                 if (n > 0)
@@ -237,9 +184,6 @@ namespace steganography
                 }
                 i++;
             }
-#if DEBUG
-            LogOn(log, ans, true);
-#endif
             int cnt = 0;
             foreach (var asd in ans)
             {
@@ -247,7 +191,7 @@ namespace steganography
                     cnt++;
             }
             //if (ans.Substring(0, BITS_TO_FLAG) != FLAG)
-            if (cnt > 2)
+            if (cnt > 3)
                 return "Сообщения нет.";
 
             ans = ans.Substring(BITS_TO_FLAG, ans.Length - BITS_TO_FLAG);
@@ -255,10 +199,6 @@ namespace steganography
             {
                 Color c1 = sourceImage.GetPixel((2 * i) % width, (2 * i) / height);
                 Color c2 = sourceImage.GetPixel((2 * i + 1) % width, (2 * i + 1) / height);
-#if DEBUG
-                LogOn(log, "True: " + $"({2 * i})" + c1.ToString()
-                        + " --- " + $"({2 * i + 1})" + c2.ToString(), true);
-#endif
                 int n = 0;
                 int a = Decode2Pixels(c1, c2, out n, 2);
                 if (n > 0)
@@ -275,10 +215,6 @@ namespace steganography
             {
                 Color c1 = sourceImage.GetPixel((2 * i) % width, (2 * i) / height);
                 Color c2 = sourceImage.GetPixel((2 * i + 1) % width, (2 * i + 1) / height);
-#if DEBUG
-                LogOn(log, "True: " + $"({2 * i})" + c1.ToString()
-                        + " --- " + $"({2 * i + 1})" + c2.ToString(), true);
-#endif
                 int n = 0;
                 int a = Decode2Pixels(c1, c2, out n, 3);
                 if (n > 0)
@@ -307,5 +243,4 @@ namespace steganography
             return ans;
         }
     }
-
 }

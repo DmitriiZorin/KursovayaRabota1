@@ -1,0 +1,14 @@
+C:\Users\dmitr\Desktop\4 семестр\Курсовая\steganography\bin\Release\steganography.exe.config
+C:\Users\dmitr\Desktop\4 семестр\Курсовая\steganography\bin\Release\steganography.exe.manifest
+C:\Users\dmitr\Desktop\4 семестр\Курсовая\steganography\bin\Release\steganography.application
+C:\Users\dmitr\Desktop\4 семестр\Курсовая\steganography\bin\Release\steganography.exe
+C:\Users\dmitr\Desktop\4 семестр\Курсовая\steganography\bin\Release\steganography.pdb
+C:\Users\dmitr\Desktop\4 семестр\Курсовая\steganography\obj\Release\steganography.csproj.AssemblyReference.cache
+C:\Users\dmitr\Desktop\4 семестр\Курсовая\steganography\obj\Release\LAB3.Form2.resources
+C:\Users\dmitr\Desktop\4 семестр\Курсовая\steganography\obj\Release\steganography.Properties.Resources.resources
+C:\Users\dmitr\Desktop\4 семестр\Курсовая\steganography\obj\Release\steganography.csproj.GenerateResource.cache
+C:\Users\dmitr\Desktop\4 семестр\Курсовая\steganography\obj\Release\steganography.csproj.CoreCompileInputs.cache
+C:\Users\dmitr\Desktop\4 семестр\Курсовая\steganography\obj\Release\steganography.exe.manifest
+C:\Users\dmitr\Desktop\4 семестр\Курсовая\steganography\obj\Release\steganography.application
+C:\Users\dmitr\Desktop\4 семестр\Курсовая\steganography\obj\Release\steganography.exe
+C:\Users\dmitr\Desktop\4 семестр\Курсовая\steganography\obj\Release\steganography.pdb

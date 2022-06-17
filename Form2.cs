@@ -47,6 +47,11 @@ namespace LAB3
                     Bitmap result = null;
                     try
                     {
+                        if (textBox1.Text == "")
+                        {
+                            MessageBox.Show("Введите сообщение.");
+                            return;
+                        }
                         Stopwatch tim = new Stopwatch();
                         if (LSB.Checked)
                         {
@@ -55,23 +60,18 @@ namespace LAB3
                             tim.Stop();
                         }
                         if (PVD.Checked)
-                                result = mach.PvdEncodeImage(toExecute, textBox1.Text);
+                        {
+                            tim.Start();
+                            result = mach.PvdEncodeImage(toExecute, textBox1.Text);
+                            tim.Stop();
+                        }
 
                         pictureBox1.Image = new Bitmap(result);
                         toSave = new Bitmap(result);
                         DownloadImg.Visible = true;
-                        using (StreamWriter s = new StreamWriter("logResearch.txt", true))
-                        {
-                            String typ = "";
-                            if (LSB.Checked) typ += "LSB";
-                            else typ += "LSB";
-                            s.WriteLine($"{typ} Msg: \"{textBox1.Text}\" Time(ms): {tim.ElapsedMilliseconds}"); 
-                        }
-
                     }
                     catch (Exception ex)
                     {
-                        //MessageBox.Show(ex.Message);
                         if (ex.Message == "Bits Overflow")
                             MessageBox.Show("Сообщение слишком большое. Сократите его либо\nвозьмите картинку более высокого разрешения.");
                     }
@@ -79,12 +79,20 @@ namespace LAB3
                 else if (Extract.Checked)
                 {
                     String resmsg = null;
-
+                    Stopwatch tim = new Stopwatch();
                     if (LSB.Checked)
+                    {
+                        tim.Start();
                         resmsg = LsbMachine.LsbDecodeImage(toExecute);
+                        tim.Stop();
+                    }
 
                     if (PVD.Checked)
+                    {
+                        tim.Start();
                         resmsg = mach.PvdDecodeImage(toExecute);
+                        tim.Stop();
+                    }
 
                     textBox1.Clear();
                     if (resmsg != "Сообщения нет.") textBox1.Text = "Сообщение в изображении: " + resmsg;
@@ -125,7 +133,6 @@ namespace LAB3
             toSave = null;
             pictureBox1.Image = null;
         }
-
         private void Extract_MouseClick(object sender, MouseEventArgs e)
         {
             pictureBox1.Image = null;

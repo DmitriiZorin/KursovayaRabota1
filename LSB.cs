@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Drawing;
 
-namespace LAB3
+namespace steganography
 {
     public class LSB
     {
@@ -31,35 +31,35 @@ namespace LAB3
             ans += ((col.B) % 2);
             return ans;
         }
-        public Bitmap LsbEncodeImage(Bitmap img, String msg)
+        public Bitmap LsbEncodeImage(Bitmap sourceImage, String msg)
         {
-            Bitmap boat = new Bitmap(img);
+            Bitmap resultImage = new Bitmap(sourceImage);
 
-            if (boat.Width * boat.Height < (BITS_TO_FLAG + BITS_TO_SIZE + msg.Length * BITS_TO_SYMBOL / BITS_BY_PIXEL + 1))
+            if (resultImage.Width * resultImage.Height < (BITS_TO_FLAG + BITS_TO_SIZE + msg.Length * BITS_TO_SYMBOL / BITS_BY_PIXEL + 1))
                 throw new Exception("Bits Overflow");
 
             //исходное сообщение переделываем в последовательность бит
-            String bitmsg = FLAG + BitMachine.IntToBit(msg.Length, BITS_TO_SIZE) + BitMachine.MsgToBit(msg) + 3;
+            String bitmsg = FLAG + BitMachine.IntToBit(msg.Length, BITS_TO_SIZE) + BitMachine.MsgToBit(msg);
             while (bitmsg.Length % 3 != 0)
                 bitmsg += "1";
 
             int i = 0;
             while (i * BITS_BY_PIXEL < BITS_TO_FLAG + BITS_TO_SIZE)
             {
-                Color ext = img.GetPixel(i % img.Width, i / img.Height);
+                Color ext = sourceImage.GetPixel(i % sourceImage.Width, i / sourceImage.Height);
                 Color ins = EncodePixel(bitmsg.Substring(i * BITS_BY_PIXEL, BITS_BY_PIXEL), ext);
-                boat.SetPixel(i % img.Width, i / img.Height, ins);
+                resultImage.SetPixel(i % sourceImage.Width, i / sourceImage.Height, ins);
                 i++;
             } 
             while (i * BITS_BY_PIXEL < bitmsg.Length)
             {
-                Color ext = img.GetPixel(i % img.Width, i / img.Height);
+                Color ext = sourceImage.GetPixel(i % sourceImage.Width, i / sourceImage.Height);
                 Color ins = EncodePixel(bitmsg.Substring(i * BITS_BY_PIXEL, BITS_BY_PIXEL), ext);
-                boat.SetPixel(i % img.Width, i / img.Height, ins);
+                resultImage.SetPixel(i % sourceImage.Width, i / sourceImage.Height, ins);
                 i++;
             }
 
-            return boat;
+            return resultImage;
         }
         public String LsbDecodeImage(Bitmap img)
         {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LAB3
+namespace steganography
 {
     static public class BitMachine
     {
@@ -31,7 +31,7 @@ namespace LAB3
         {
             int t = 0;
             int plow = 1;
-            for (int i = bit.Length - 1; i > 0; i--)
+            for (int i = bit.Length - 1; i >= 0; i--)
             {
                 t += (int)(bit[i] == '0' ? 0 : 1) * plow;
                 plow = plow * 2;

@@ -34,7 +34,7 @@ namespace LAB3
             this.Extract = new System.Windows.Forms.RadioButton();
             this.executeStego = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.radioButton3 = new System.Windows.Forms.RadioButton();
+            this.PVD = new System.Windows.Forms.RadioButton();
             this.LSB = new System.Windows.Forms.RadioButton();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
@@ -100,7 +100,7 @@ namespace LAB3
             // groupBox2
             // 
             this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox2.Controls.Add(this.radioButton3);
+            this.groupBox2.Controls.Add(this.PVD);
             this.groupBox2.Controls.Add(this.LSB);
             this.groupBox2.Location = new System.Drawing.Point(572, 167);
             this.groupBox2.Name = "groupBox2";
@@ -109,16 +109,16 @@ namespace LAB3
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Выберите метод стеганографии";
             // 
-            // radioButton3
+            // PVD
             // 
-            this.radioButton3.AutoSize = true;
-            this.radioButton3.Location = new System.Drawing.Point(6, 42);
-            this.radioButton3.Name = "radioButton3";
-            this.radioButton3.Size = new System.Drawing.Size(88, 17);
-            this.radioButton3.TabIndex = 1;
-            this.radioButton3.TabStop = true;
-            this.radioButton3.Text = "PVD???GLM";
-            this.radioButton3.UseVisualStyleBackColor = true;
+            this.PVD.AutoSize = true;
+            this.PVD.Location = new System.Drawing.Point(6, 42);
+            this.PVD.Name = "PVD";
+            this.PVD.Size = new System.Drawing.Size(47, 17);
+            this.PVD.TabIndex = 1;
+            this.PVD.TabStop = true;
+            this.PVD.Text = "PVD";
+            this.PVD.UseVisualStyleBackColor = true;
             // 
             // LSB
             // 
@@ -224,7 +224,7 @@ namespace LAB3
         private System.Windows.Forms.RadioButton Extract;
         private System.Windows.Forms.Button executeStego;
         private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.RadioButton radioButton3;
+        private System.Windows.Forms.RadioButton PVD;
         private System.Windows.Forms.RadioButton LSB;
         private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Label label1;
